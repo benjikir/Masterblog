@@ -26,6 +26,13 @@ def save_blog_posts(posts):
     except IOError:
         print(f"Error: Could not write to {BLOG_POSTS_FILE}")
 
+def fetch_post_by_id(post_id):
+    """Fetches a single post by its ID."""
+    blog_posts = load_blog_posts()
+    for post in blog_posts:
+        if post['id'] == post_id:
+            return post
+    return None
 
 @app.route('/')
 def index():
@@ -67,8 +74,30 @@ def delete(post_id):
     save_blog_posts(blog_posts)  # Save the updated blog posts to the JSON file
     return redirect(url_for('index'))  # Redirect back to the home page
 
+@app.route('/update/<int:post_id>', methods=['GET', 'POST'])
+def update(post_id):
+    """Updates a blog post."""
+    blog_posts = load_blog_posts()
+    post = fetch_post_by_id(post_id)
+
+    if post is None:
+        return "Post not found", 404
+
+    if request.method == 'POST':
+        title = request.form.get('title')
+        content = request.form.get('content')
+
+        # Update the post in the list
+        for i, p in enumerate(blog_posts):
+            if p['id'] == post_id:
+                blog_posts[i]['title'] = title
+                blog_posts[i]['content'] = content
+                break
+
+        save_blog_posts(blog_posts)
+        return redirect(url_for('index'))
+
+    return render_template('update.html', post=post)
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-    """"""
